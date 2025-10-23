@@ -28,7 +28,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
         $this->ensureIsNotRateLimited();
 
-        $response = Http::post(env('API_URL') . '/login', [
+        $response = Http::post(env('API_BASE_URL') . '/login', [
             'email' => $this->email,
             'password' => $this->password,
         ]);

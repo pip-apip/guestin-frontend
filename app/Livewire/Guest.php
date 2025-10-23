@@ -2,8 +2,10 @@
 
 namespace App\Livewire;
 
+use Flux\Flux;
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
+use Masmerise\Toaster\Toaster;
 
 class Guest extends Component
 {
@@ -31,7 +33,7 @@ class Guest extends Component
     public function getData()
     {
         try {
-            $response = Http::withToken("6|TEkkoRe7FFNsajYxqL0TFu25oD26JBeiHyh2VRyace4ec310")->get(env('API_BASE_URL') . '/guests');
+            $response = Http::withToken(session('token'))->get(env('API_BASE_URL') . '/guests');
             $result = $response->json();
             $this->datas = $result['data'] ?? [];
         } catch (\Exception $e) {
@@ -58,24 +60,29 @@ class Guest extends Component
             $this->guestData['status'] = 'invited';
         }
         try {
-            $response = Http::withToken("6|TEkkoRe7FFNsajYxqL0TFu25oD26JBeiHyh2VRyace4ec310")->post(env('API_BASE_URL') . '/guests', $this->guestData);
-            $result = $response->json();
+            $response = Http::withToken(session('token'))->post(env('API_BASE_URL') . '/guests', $this->guestData)->json();
+            session()->flash('success', $response['message'] ?? 'Guest added successfully.');
 
-            if ($response->status() === 200) {
-                session()->flash('success', $result['message'] ?? 'Guest added successfully.');
-                $this->getData();
-                $this->dispatch('close-modal');
-            } else {
-                \Log::error($result['message'] ?? 'Failed to add guest.');
-                session()->flash('error', $result['message'] ?? 'Failed to add guest.');
-                // Bring back the old value
-                $this->guestData = array_merge($this->guestData, $this->guestData);
+
+            if($response['message']=== 'success'){
+                // $this->getData();
+                Flux::modals()->close();
+                $this->guestData = [
+                    'id' => '',
+                    'name' => '',
+                    'email' => '',
+                    'phone' => '',
+                    'organization' => '',
+                    'event_id' => '',
+                    'event_name' => '',
+                    'status' => '',
+                ];
+                Toaster::success( 'Guest added successfully.');
+            }else {
+                throw new \Exception( $response['error'] ?? 'Failed to add guest.');
             }
-        } catch (\Exception $e) {
-            \Log::error($e->getMessage());
-            session()->flash('error', 'Failed to add guest: ' . $e->getMessage());
-            // Bring back the old value
-            $this->guestData = array_merge($this->guestData, $this->guestData);
+        }catch (\Exception $e) {
+            Toaster::error( $e->getMessage() ?? 'Failed to add guest.');
         }
     }
 

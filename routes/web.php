@@ -20,10 +20,17 @@ Route::middleware(['api.auth'])->group(function () {
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 
-    Route::get('events', Event::class)->name('events.show');
-    Route::get('guest', Guest::class)->name('guest.show');
-    Volt::route('scan/admin', 'scan.admin')->name('scan.admin');
-    Volt::route('guests/confirm/{code}', 'guestsConfirm')->name('guests.confirm');
+
+    Route::prefix('events')->group(function () {
+        Route::get('/', Event::class)->name('events.index');
+        Volt::route('/{name}', 'events.eventShow')->name('events.show');
+    });
+
+    Route::prefix('guest')->group(function () {
+        Route::get('/', Guest::class)->name('guest.index');
+        Volt::route('guests/confirm/{code}', 'guestsConfirm')->name('guests.confirm');
+    });
 });
+Volt::route('scan/admin/{slug}', 'scan.admin')->name('scan.admin');
 
 require __DIR__.'/auth.php';

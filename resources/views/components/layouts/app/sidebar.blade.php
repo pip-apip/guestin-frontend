@@ -4,6 +4,7 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
+
         <flux:sidebar sticky stashable class="border-r border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
@@ -14,8 +15,8 @@
             <flux:navlist variant="outline">
                 <flux:navlist.group heading="Platform" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Dashboard</flux:navlist.item>
-                    <flux:navlist.item icon="flag" :href="route('events.show')" :current="request()->routeIs('events.show')" wire:navigate>Events</flux:navlist.item>
-                    <flux:navlist.item icon="users" :href="route('guest.show')" :current="request()->routeIs('guest.show')" wire:navigate>Guest</flux:navlist.item>
+                    <flux:navlist.item icon="flag" :href="route('events.index')" :current="request()->routeIs('events.index') || request()->routeIs('events.show')" wire:navigate>Events</flux:navlist.item>
+                    <flux:navlist.item icon="users" :href="route('guest.index')" :current="request()->routeIs('guest.index') || request()->routeIs('guest.show')" wire:navigate>Guest</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 
