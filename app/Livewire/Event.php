@@ -2,9 +2,10 @@
 
 namespace App\Livewire;
 
+use Flux\Flux;
 use Livewire\Component;
-use Illuminate\Support\Facades\Http;
 use Livewire\Attributes\On;
+use Illuminate\Support\Facades\Http;
 
 class Event extends Component
 {
@@ -59,6 +60,7 @@ class Event extends Component
     public function resetAddModal()
     {
         $this->addModal = true;
+        Flux::closeModal('form-event-modal');
     }
 
     public function render()
