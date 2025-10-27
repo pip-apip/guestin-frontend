@@ -40,7 +40,6 @@ new #[Layout('components.layouts.app-landing')] class extends Component {
             ]);
             Toaster::success('Check-in successful.');
         } else {
-            dd($this->scanResult);
             $this->dispatch('qr-error', [
             'message' => $response['error'] ?? 'Check-in failed.'
              ]);
