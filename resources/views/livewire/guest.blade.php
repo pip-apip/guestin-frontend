@@ -121,7 +121,7 @@
                     <flux:text class="mt-2">Add a new guest to your list</flux:text>
                 </div>
                 <flux:input label="Guest Name" placeholder="Type the name of the guest" wire:model.defer="guestData.name" />
-                <flux:select label="Event" placeholder="Select event name" wire:model.defer="guestData.event_id">
+                <flux:select label="Event" placeholder="Select event name" wire:model.defer="guestData.events_id">
                     @foreach ($eventDatas as $data)
                     <flux:select.option value="{{ $data['id'] }}">{{ $data['name'] }}</flux:select.option>
                     @endforeach

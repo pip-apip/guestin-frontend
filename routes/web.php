@@ -23,7 +23,8 @@ Route::middleware(['api.auth'])->group(function () {
 
     Route::prefix('events')->group(function () {
         Route::get('/', Event::class)->name('events.index');
-        Volt::route('/{name}', 'events.eventShow')->name('events.show');
+        Volt::route('/show/{name}', 'events.eventShow')->name('events.show');
+        Volt::route('/add', 'events.eventCreate')->name('events.create');
     });
 
     Route::prefix('guest')->group(function () {

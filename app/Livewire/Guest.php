@@ -19,7 +19,7 @@ class Guest extends Component
         'email' => '',
         'phone' => '',
         'organization' => '',
-        'event_id' => '',
+        'events_id' => '',
         'event_name' => '',
         'status' => '',
     ];
@@ -60,6 +60,7 @@ class Guest extends Component
             $this->guestData['status'] = 'invited';
         }
         try {
+            \Log::info($this->guestData);
             $response = Http::withToken(session('token'))->post(env('API_BASE_URL') . '/guests', $this->guestData)->json();
             session()->flash('success', $response['message'] ?? 'Guest added successfully.');
 
@@ -73,7 +74,7 @@ class Guest extends Component
                     'email' => '',
                     'phone' => '',
                     'organization' => '',
-                    'event_id' => '',
+                    'events_id' => '',
                     'event_name' => '',
                     'status' => '',
                 ];

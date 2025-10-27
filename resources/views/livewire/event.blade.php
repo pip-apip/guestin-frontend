@@ -16,16 +16,54 @@ if (modal) {
                 <flux:subheading size="lg" class="mb-6">Manage your Events List</flux:subheading>
             </span>
             <flux:modal.trigger name="form-event-modal">
-                <flux:button variant="primary" color="green" size="sm" wire:click="$set('addModal', true)">Add Event</flux:button>
+                {{-- <flux:button variant="primary" size="sm" wire:click="$set('addModal', true)">Add Event</flux:button> --}}
             </flux:modal.trigger>
+            <flux:button variant="primary" size="sm" wire:navigate href="{{ route('events.create') }}">
+                Add Event
+            </flux:button>
         </div>
         <flux:separator variant="subtle" />
+    </div>
+
+    <div class="justify-start mb-4 grid grid-flow-col grid-cols-4 gap-4 px-5 py">
+        <div class="flex justify-between gap-4">
+            <flux:label class="text-sm font-medium text-gray-900 dark:text-gray-300">Name</flux:label>
+            <flux:input type="search" placeholder="Search events..." wire:model="searchQuery" />
+        </div>
+        <div class="flex justify-between gap-4 cols-span-2">
+            <flux:label class="text-sm font-medium text-gray-900 dark:text-gray-300">Status</flux:label>
+            <flux:select wire:model="industry" placeholder="Select Status ...">
+                <flux:select.option>Upcoming</flux:select.option>
+                <flux:select.option>Design services</flux:select.option>
+                <flux:select.option>Web development</flux:select.option>
+                <flux:select.option>Accounting</flux:select.option>
+                <flux:select.option>Legal services</flux:select.option>
+                <flux:select.option>Consulting</flux:select.option>
+                <flux:select.option>Other</flux:select.option>
+            </flux:select>
+        </div>
+        <div class="flex justify-between gap-4 cols-span-2">
+        </div>
+        <div class="flex justify-between gap-4">
+            <flux:label class="text-sm font-medium text-gray-900 dark:text-gray-300">Sort</flux:label>
+            <flux:select wire:model="industry" placeholder="Sort By">
+                <flux:select.option>Name</flux:select.option>
+                <flux:select.option>Date</flux:select.option>
+                <flux:select.option>Time</flux:select.option>
+                <flux:select.option>Location</flux:select.option>
+            </flux:select>
+            <flux:select wire:model="industry" placeholder="Order">
+                <flux:select.option>ASC</flux:select.option>
+                <flux:select.option>DESC</flux:select.option>
+            </flux:select>
+        </div>
+
     </div>
 
     <div class="overflow-x-auto">
         <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
                     <tr>
                         <th scope="col" class="px-6 py-3">
                             No
@@ -52,37 +90,42 @@ if (modal) {
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($datas as $data )
-                    <tr as-a href="#" class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        <td class="px-6 py-4 text-gray-700 dark:text-gray-200 font-medium">
-                            {{ $loop->iteration }}
-                        </td>
-                        <td class="px-6 py-4 text-gray-900 dark:text-gray-100 font-semibold">
-                            {{ $data['name'] }}
-                        </td>
-                        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
-                            {{ \Carbon\Carbon::parse($data['start_date'])->format('D m Y') }} - {{ \Carbon\Carbon::parse($data['end_date'])->format('D m Y') }}
-                        </td>
-                        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
-                            {{ \Carbon\Carbon::parse($data['start_time'])->format('H:i') }} - {{ \Carbon\Carbon::parse($data['end_time'])->format('H:i') }}
-                        </td>
-                        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
-                            {{ $data['location'] }}
-                        </td>
-                        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
-                            {{ ucfirst(str_replace('_', ' ', $data['status'])) }}
-                        </td>
-                        <td class="px-6 py-4 text-right flex justify-end gap-3">
-                            <flux:modal.trigger name="form-event-modal">
-                                <flux:button variant="ghost" size="sm" wire:click="edit('{{ $data['slug'] }}')">
-                                    Edit
+                    @foreach ($datas as $data)
+                        <tr as-a href="#"
+                            class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <td class="px-6 py-4 text-gray-700 dark:text-gray-200 font-medium">
+                                {{ $loop->iteration }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-900 dark:text-gray-100 font-semibold">
+                                {{ $data['name'] }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+                                {{ \Carbon\Carbon::parse($data['start_date'])->format('D m Y') }} -
+                                {{ \Carbon\Carbon::parse($data['end_date'])->format('D m Y') }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+                                {{ \Carbon\Carbon::parse($data['start_time'])->format('H:i') }} -
+                                {{ \Carbon\Carbon::parse($data['end_time'])->format('H:i') }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+                                {{ $data['location'] }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+                                {{ ucfirst(str_replace('_', ' ', $data['status'])) }}
+                            </td>
+                            <td class="px-6 py-4 text-right flex justify-end gap-3">
+                                <flux:modal.trigger name="form-event-modal">
+                                    <flux:button variant="ghost" size="sm"
+                                        wire:click="edit('{{ $data['slug'] }}')">
+                                        Edit
+                                    </flux:button>
+                                </flux:modal.trigger>
+                                <flux:button variant="ghost" size="sm" wire:navigate
+                                    href="{{ route('events.show', $data['slug']) }}">
+                                    Show
                                 </flux:button>
-                            </flux:modal.trigger>
-                            <flux:button variant="ghost" size="sm" wire:navigate href="{{ route('events.show', $data['slug']) }}">
-                                Show
-                            </flux:button>
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -98,9 +141,11 @@ if (modal) {
             </div>
             <flux:input label="Name Event" placeholder="Type the name of the event" wire:model.defer="editData.name" />
 
-            <flux:textarea label="Description Event" placeholder="Type the description of the event" wire:model.defer="editData.description" />
+            <flux:textarea label="Description Event" placeholder="Type the description of the event"
+                wire:model.defer="editData.description" />
 
-            <flux:input label="Location Event" placeholder="Type the location of the event" wire:model.defer="editData.location" />
+            <flux:input label="Location Event" placeholder="Type the location of the event"
+                wire:model.defer="editData.location" />
 
             <div class="grid grid-cols-2 gap-2">
                 <flux:input type="date" label="Start Date Event" wire:model.defer="editData.start_date" />
