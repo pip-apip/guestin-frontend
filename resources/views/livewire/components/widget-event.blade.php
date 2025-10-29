@@ -3,7 +3,7 @@
 use Livewire\Volt\Component;
 
 new class extends component{
-
+    public $data;
 }
 
 ?>
@@ -19,7 +19,7 @@ new class extends component{
                     Total Guests
                 </span>
                 <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight">
-                    50
+                    {{ $this->data['total_guests'] }}
                 </p>
             </div>
         </div>
@@ -34,7 +34,7 @@ new class extends component{
                     Total Confirmed
                 </span>
                 <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight">
-                    1 / 3
+                    {{ $this->data['total_confirmed'] }} / {{ $this->data['total_guests'] }}
                 </p>
             </div>
         </div>
@@ -49,7 +49,7 @@ new class extends component{
                     Checked In Today
                 </span>
                 <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight">
-                    0
+                    {{ $this->data['checked_in_today'] }}
                 </p>
             </div>
         </div>
@@ -63,7 +63,7 @@ new class extends component{
                     Not Checked In Today
                 </span>
                 <p class="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight">
-                    1
+                    {{ $this->data['not_checked_in_today'] }}
                 </p>
             </div>
         </div>

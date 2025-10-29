@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Http;
 new class extends Component {
     public $name;
     public $guests;
-    public $date = '2025-10-28';
+    public $date = '';
     public $addModal = true;
     public $guestData = [
         'id' => '',
@@ -35,6 +35,7 @@ new class extends Component {
 
     public function mount()
     {
+         $this->date = today()->format('Y-m-d') ;
         $this->loadGuests();
     }
 
@@ -185,7 +186,7 @@ new class extends Component {
 
     <div class="grid grid-cols-5 gap-3">
         <div class="col-span-4 grid grid-rows-[auto_1fr] gap-3">
-            <livewire:components.widget-event />
+            <livewire:components.widget-event :data="$this->event['widgets']" />
 
             <div class="block p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all">
                 <!-- Event Name -->
@@ -251,7 +252,7 @@ new class extends Component {
 
             if ($today->lt($start)) {
             // Event upcoming
-            $daysRemaining = $today->diffInDays($start); // 0 berarti mulai hari ini
+            $daysRemaining = $start->diffInDays($today) + 1; // termasuk hari ini
             } elseif ($today->between($start, $end)) {
             // Event ongoing
             $daysRemaining = $today->diffInDays($end) + 1; // sisa hari
@@ -270,10 +271,13 @@ new class extends Component {
 
             <!-- Progress Bar -->
             @php
+            $totalDays = $start->diffInDays($end) + 1;
+
             if ($this->event['event']['status'] === 'upcoming') {
             $progress = 0;
             } elseif ($this->event['event']['status'] === 'ongoing') {
-            $progress = ($today->diffInDays($end) / $this->event['widgets']['days_total']) * 100;
+            $daysPassed = $today->diffInDays($end) + 1; // hari sudah berjalan termasuk hari ini
+            $progress = ($daysPassed / $totalDays) * 100;
             } else {
             $progress = 100;
             }
@@ -365,7 +369,7 @@ new class extends Component {
                 </thead>
                 <tbody>
                     @foreach ($this->guests as $guest)
-                    <tr wire:key="{{ $guest['id'] }}" class="border-b border-gray-100 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition">
+                    <tr wire:key="{{ $guest['id'] }}-{{ $this->date }}" class="border-b border-gray-100 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition">
                         <td class="px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
                             {{ $guest['name'] }}
                         </td>
