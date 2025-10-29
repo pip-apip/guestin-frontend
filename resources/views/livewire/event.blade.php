@@ -94,6 +94,7 @@ if (modal) {
                     @else
                         @foreach ($datas as $data)
                             <tr as-a href="#"
+                                wire:key="{{ $data['id'] }}"
                                 class="border-b border-gray-100 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition">
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-200 font-medium">
                                     {{ $loop->iteration }}

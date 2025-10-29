@@ -4,11 +4,12 @@ use Flux\Flux;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Livewire\Volt\Component;
+use Masmerise\Toaster\Toaster;
 use Illuminate\Support\Facades\Http;
 
 new class extends Component {
     public $name;
-    public $guests = [];
+    public $guests;
     public $addModal = true;
     public $guestData = [
         'id' => '',
@@ -21,13 +22,12 @@ new class extends Component {
     ];
 
     public $searchQuery = '';
-    public $searchStatus = '';
+    public $searchStatus = 'invited';
     public $filterSort = 'name';
     public $filterOrder = 'asc';
 
-    public function mount($name)
+    public function mount()
     {
-        $this->name = $name;
         $this->loadGuests();
     }
 
@@ -40,24 +40,18 @@ new class extends Component {
 
     public function loadGuests()
     {
-        $this->guest = [];
-        $search = '';
-        if (!empty($this->searchQuery)) {
-            $search = $this->searchQuery;
-        } elseif (!empty($this->searchStatus)) {
-            $search = $this->searchStatus;
-        }
         $params = [
             'events_id' => $this->event['event']['id'] ?? null,
-            'search' => $search,
+            'status' => $this->searchStatus,
+            'search' => $this->searchQuery,
             'sort_by' => $this->filterSort,
             'order' => $this->filterOrder,
         ];
         try {
-            $response = Http::get(env('API_BASE_URL') . '/guests', $params);
+            $response = Http::get(env('API_BASE_URL') . '/guests?', $params);
             $result = $response->json();
+            $this->guests = '';
             $this->guests = $result['data'] ?? [];
-            // \Log:
         } catch (\Exception $e) {
             $this->guests = [];
         }
@@ -90,7 +84,6 @@ new class extends Component {
         }
         $this->guestData['events_id'] = $this->event['event']['id'] ?? null;
         try {
-            \Log::info($this->guestData);
             $response = Http::withToken(session('token'))
                 ->post(env('API_BASE_URL') . '/guests', $this->guestData)
                 ->json();
@@ -286,11 +279,8 @@ new class extends Component {
                 <flux:label class="text-sm font-medium text-gray-900 dark:text-gray-300">Sort</flux:label>
                 <flux:select wire:model.live="filterSort" placeholder="Sort By">
                     <flux:select.option value="name">Name</flux:select.option>
-                    <flux:select.option value="start_date">Start Date</flux:select.option>
-                    <flux:select.option value="end_date">End Date</flux:select.option>
-                    <flux:select.option value="start_time">Time Start</flux:select.option>
-                    <flux:select.option value="end_time">Time End</flux:select.option>
-                    <flux:select.option value="location">Location</flux:select.option>
+                    <flux:select.option value="email">Email</flux:select.option>
+                    <flux:select.option value="organization">Organization</flux:select.option>
                 </flux:select>
                 <flux:select wire:model.live="filterOrder" placeholder="Order">
                     <flux:select.option value="asc">ASC</flux:select.option>
@@ -307,19 +297,22 @@ new class extends Component {
                             <th class="px-6 py-3">Name</th>
                             <th class="px-6 py-3">Email</th>
                             <th class="px-6 py-3">Phone</th>
+                            <th class="px-6 py-3">Organization</th>
                             <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Notes</th>
                             <th class="px-6 py-3 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($this->guests as $guest)
-                            <tr
+                            <tr wire:key="{{ $guest['id'] }}"
                                 class="border-b border-gray-100 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition">
                                 <td class="px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
                                     {{ $guest['name'] }}
                                 </td>
                                 <td class="px-6 py-3">{{ $guest['email'] }}</td>
                                 <td class="px-6 py-3">{{ $guest['phone'] }}</td>
+                                <td class="px-6 py-3">{{ $guest['organization'] ?? '-' }}</td>
                                 <td class="px-6 py-3">
                                     <span
                                         class="px-2 py-1 rounded-full text-xs font-medium
@@ -335,6 +328,7 @@ new class extends Component {
                                         {{ Str::title(str_replace('_', ' ', $guest['status'])) }}
                                     </span>
                                 </td>
+                                <td class="px-6 py-3">{{ $guest['notes'] ?? '-' }}</td>
                                 <td class="px-6 py-3 text-right flex justify-end gap-2">
                                     <flux:modal.trigger name="qr-modal-{{ $guest['id'] }}">
                                         @if ($guest['qr_generated'] !== null)
