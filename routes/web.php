@@ -25,11 +25,12 @@ Route::middleware(['api.auth'])->group(function () {
         Route::get('/', Event::class)->name('events.index');
         Volt::route('/show/{name}', 'events.eventShow')->name('events.show');
         Volt::route('/add', 'events.eventCreate')->name('events.create');
+        Volt::route('/edit/{name}', 'events.eventEdit')->name('events.edit');
     });
 
     Route::prefix('guest')->group(function () {
         Route::get('/', Guest::class)->name('guest.index');
-        Volt::route('guests/confirm/{code}', 'guestsConfirm')->name('guests.confirm');
+        Volt::route('/confirm/{code}', 'guestsConfirm')->name('guests.confirm');
     });
 });
 Volt::route('scan/admin/{slug}', 'scan.admin')->name('scan.admin');

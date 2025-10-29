@@ -11,6 +11,10 @@ class Event extends Component
 {
     public $datas = [];
     public $addModal = true;
+    public $searchQuery = '';
+    public $searchStatus = '';
+    public $filterSort = 'name';
+    public $filterOrder = 'asc';
 
     public $editData = [
         'name' => '',
@@ -38,29 +42,47 @@ class Event extends Component
         }
     }
 
-    public function edit($name)
+    public function updatedSearchQuery()
     {
-        // dd($name);
-        $this->addModal = false;
-
-        try {
-            $response = Http::get(env('API_BASE_URL') . '/events/' . urlencode($name));
-            $result = $response->json();
-            $this->editData = $result['data'] ?? [];
-        } catch (\Exception $e) {
-            $this->editData = [];
-        }
-
-        // dd($this->editData);
-
-        $this->dispatch('openEditModal');
+        $this->filter();
     }
 
-    #[On('resetAddModal')]
-    public function resetAddModal()
+    public function updatedSearchStatus()
     {
-        $this->addModal = true;
-        Flux::closeModal('form-event-modal');
+        $this->filter();
+    }
+
+    public function updatedFilterSort()
+    {
+        $this->filter();
+    }
+
+    public function updatedFilterOrder()
+    {
+        $this->filter();
+    }
+
+    public function filter()
+    {
+        $search = '';
+        if(!empty($this->searchQuery)){
+            $search = $this->searchQuery;
+        }else if(!empty($this->searchStatus)){
+            $search = $this->searchStatus;
+        }
+        $params = [
+            'search' => $search,
+            'sort_by' => $this->filterSort,
+            'order' => $this->filterOrder,
+        ];
+
+        try {
+            $response = Http::get(env('API_BASE_URL') . '/events', $params);
+            $result = $response->json();
+            $this->datas = $result['data'] ?? [];
+        } catch (\Exception $e) {
+            $this->datas = [];
+        }
     }
 
     public function render()

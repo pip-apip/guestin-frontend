@@ -1,15 +1,145 @@
 <?php
+
+use Flux\Flux;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Livewire\Volt\Component;
+use Illuminate\Support\Facades\Http;
 
 new class extends Component {
     public $name;
+    public $guests = [];
+    public $addModal = true;
+    public $guestData = [
+        'id' => '',
+        'name' => '',
+        'email' => '',
+        'phone' => '',
+        'organization' => '',
+        'event_name' => '',
+        'status' => '',
+    ];
+
+    public $searchQuery = '';
+    public $searchStatus = '';
+    public $filterSort = 'name';
+    public $filterOrder = 'asc';
+
+    public function mount($name)
+    {
+        $this->name = $name;
+        $this->loadGuests();
+    }
 
     public function getEventProperty()
     {
         $response = Http::withToken(session('token'))->get(env('API_BASE_URL') . '/events/' . $this->name);
-        return $response->json('data');
+        $this->guestData['events_id'] = $response->json()['data']['id'] ?? null;
+        return $response->json()['data'] ?? [];
+    }
+
+    public function loadGuests()
+    {
+        $this->guest = [];
+        $search = '';
+        if (!empty($this->searchQuery)) {
+            $search = $this->searchQuery;
+        } elseif (!empty($this->searchStatus)) {
+            $search = $this->searchStatus;
+        }
+        $params = [
+            'events_id' => $this->event['event']['id'] ?? null,
+            'search' => $search,
+            'sort_by' => $this->filterSort,
+            'order' => $this->filterOrder,
+        ];
+        try {
+            $response = Http::get(env('API_BASE_URL') . '/guests', $params);
+            $result = $response->json();
+            $this->guests = $result['data'] ?? [];
+            // \Log:
+        } catch (\Exception $e) {
+            $this->guests = [];
+        }
+    }
+
+    public function updatedSearchQuery()
+    {
+        $this->loadGuests();
+    }
+
+    public function updatedSearchStatus()
+    {
+        $this->loadGuests();
+    }
+
+    public function updatedFilterSort()
+    {
+        $this->loadGuests();
+    }
+
+    public function updatedFilterOrder()
+    {
+        $this->loadGuests();
+    }
+
+    public function save()
+    {
+        if ($this->addModal) {
+            $this->guestData['status'] = 'invited';
+        }
+        $this->guestData['events_id'] = $this->event['event']['id'] ?? null;
+        try {
+            \Log::info($this->guestData);
+            $response = Http::withToken(session('token'))
+                ->post(env('API_BASE_URL') . '/guests', $this->guestData)
+                ->json();
+            session()->flash('success', $response['message'] ?? 'Guest added successfully.');
+
+            if ($response['message'] === 'success') {
+                // $this->getData();
+                Flux::modals()->close();
+                $this->guestData = [
+                    'id' => '',
+                    'name' => '',
+                    'email' => '',
+                    'phone' => '',
+                    'organization' => '',
+                    'events_id' => '',
+                    'event_name' => '',
+                    'status' => '',
+                ];
+                Toaster::success('Guest added successfully.');
+                $this->loadGuests();
+            } else {
+                throw new \Exception($response['error'] ?? 'Failed to add guest.');
+            }
+        } catch (\Exception $e) {
+            Toaster::error($e->getMessage() ?? 'Failed to add guest.');
+        }
+        Flux::modals()->close();
+    }
+
+    public function edit($guestId)
+    {
+        try {
+            $response = Http::withToken(session('token'))
+                ->get(env('API_BASE_URL') . '/guests/' . $guestId)
+                ->json();
+            // dd($response['data']['guest']['name']);
+            $this->guestData['id'] = $response['data']['guest']['id'] ?? '';
+            $this->guestData['name'] = $response['data']['guest']['name'] ?? '';
+            $this->guestData['email'] = $response['data']['guest']['email'] ?? '';
+            $this->guestData['phone'] = $response['data']['guest']['phone'] ?? '';
+            $this->guestData['organization'] = $response['data']['guest']['organization'] ?? '';
+            $this->guestData['event_name'] = $response['data']['guest']['event_name'] ?? '';
+            $this->guestData['status'] = $response['data']['guest']['status'] ?? '';
+
+            $this->addModal = false;
+            Flux::modal('form-guest-modal')->show();
+        } catch (\Exception $th) {
+            //throw $th;
+        }
     }
 };
 ?>
@@ -36,8 +166,7 @@ new class extends Component {
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div
-            class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800
-    rounded-2xl p-5 shadow-sm hover:shadow-md transition flex items-center gap-5">
+            class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition flex items-center gap-5">
             <div class="flex-shrink-0">
                 <div class="p-4 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
                     <flux:icon name="map-pin" class="w-8 h-8" />
@@ -56,8 +185,7 @@ new class extends Component {
 
         {{-- Date Widget --}}
         <div
-            class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800
-    rounded-2xl p-5 shadow-sm hover:shadow-md transition flex items-center gap-5">
+            class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition flex items-center gap-5">
 
             <div class="flex-shrink-0">
                 <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300">
@@ -79,9 +207,7 @@ new class extends Component {
 
         {{-- Time Widget --}}
         <div
-            class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800
-    rounded-2xl p-5 shadow-sm hover:shadow-md transition flex items-center gap-5">
-
+            class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition flex items-center gap-5">
             <div class="flex-shrink-0">
                 <div class="p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300">
                     <flux:icon name="clock" class="w-8 h-8" />
@@ -130,18 +256,50 @@ new class extends Component {
 
     </div>
 
-
     {{-- Guests Table --}}
     <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
         <div class="flex justify-between items-center mb-4">
             <flux:heading size="lg">Guest List</flux:heading>
-            <flux:input size="sm" placeholder="Filter by..." class="w-md" />
-            <flux:button size="sm" variant="primary">
-                + Add Guest
-            </flux:button>
+            <flux:modal.trigger name="form-guest-modal">
+                <flux:button size="sm" variant="primary">
+                    + Add Guest
+                </flux:button>
+            </flux:modal.trigger>
+        </div>
+        <div class="justify-between mb-6 grid grid-flow-col grid-cols-3 gap-4 px-5 py">
+            <div class="flex gap-4 col-span-2">
+                <div class="flex justify-between gap-4">
+                    <flux:label class="text-sm font-medium text-gray-900 dark:text-gray-300">Search</flux:label>
+                    <flux:input type="search" placeholder="Search guests..." wire:model.live="searchQuery" />
+                </div>
+                <div class="flex justify-between gap-4">
+                    <flux:label class="text-sm font-medium text-gray-900 dark:text-gray-300">Status</flux:label>
+                    <flux:select wire:model.live="searchStatus" placeholder="Select Status ...">
+                        <flux:select.option value="invited">Invited</flux:select.option>
+                        <flux:select.option value="confirmed">Confirmed</flux:select.option>
+                        <flux:select.option value="canceled">Canceled</flux:select.option>
+                        {{-- <flux:select.option value="canceled">Canceled</flux:select.option> --}}
+                    </flux:select>
+                </div>
+            </div>
+            <div class="flex justify-between gap-4">
+                <flux:label class="text-sm font-medium text-gray-900 dark:text-gray-300">Sort</flux:label>
+                <flux:select wire:model.live="filterSort" placeholder="Sort By">
+                    <flux:select.option value="name">Name</flux:select.option>
+                    <flux:select.option value="start_date">Start Date</flux:select.option>
+                    <flux:select.option value="end_date">End Date</flux:select.option>
+                    <flux:select.option value="start_time">Time Start</flux:select.option>
+                    <flux:select.option value="end_time">Time End</flux:select.option>
+                    <flux:select.option value="location">Location</flux:select.option>
+                </flux:select>
+                <flux:select wire:model.live="filterOrder" placeholder="Order">
+                    <flux:select.option value="asc">ASC</flux:select.option>
+                    <flux:select.option value="desc">DESC</flux:select.option>
+                </flux:select>
+            </div>
         </div>
 
-        @if (!empty($this->event['guests']))
+        @if (!empty($this->guests) && count($this->guests) > 0)
             <div class="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
                 <table class="min-w-full text-sm text-left text-gray-600 dark:text-gray-300">
                     <thead class="bg-gray-50 dark:bg-zinc-800 text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -154,7 +312,7 @@ new class extends Component {
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($this->event['guests'] as $guest)
+                        @foreach ($this->guests as $guest)
                             <tr
                                 class="border-b border-gray-100 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition">
                                 <td class="px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
@@ -178,10 +336,23 @@ new class extends Component {
                                     </span>
                                 </td>
                                 <td class="px-6 py-3 text-right flex justify-end gap-2">
-                                    <flux:button size="sm" variant="ghost">
-                                        View QR
-                                    </flux:button>
-                                    <flux:button size="sm" variant="ghost">
+                                    <flux:modal.trigger name="qr-modal-{{ $guest['id'] }}">
+                                        @if ($guest['qr_generated'] !== null)
+                                            <flux:button class="text-sm" :disabled="$guest['qr_generated'] == null"
+                                                variant="primary" size="sm">
+                                                Show QR
+                                            </flux:button>
+                                        @else
+                                            <flux:tooltip content="QR Code not generated yet">
+                                                <div>
+                                                    <flux:button disabled size="sm">Show QR</flux:button>
+                                                </div>
+                                            </flux:tooltip>
+                                        @endif
+
+                                    </flux:modal.trigger>
+                                    <flux:button size="sm" variant="ghost"
+                                        wire:click="edit({{ $guest['id'] }})">
                                         Edit
                                     </flux:button>
                                 </td>
@@ -196,4 +367,45 @@ new class extends Component {
             </div>
         @endif
     </div>
+
+    <flux:modal name="form-guest-modal" class="md:w-200">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ $addModal ? 'Add Guest' : 'Edit Guest' }}</flux:heading>
+                <flux:text class="mt-2">Add a new guest to your list {{ $this->event['event']['id'] }}</flux:text>
+            </div>
+            <flux:input label="Guest Name" placeholder="Type the name of the guest"
+                wire:model.defer="guestData.name" />
+            <flux:select label="Event" placeholder="Select event name" wire:model.defer="guestData.events_id"
+                disabled>
+                <flux:select.option value="{{ $this->event['event']['id'] }}" selected>
+                    {{ $this->event['event']['name'] }}</flux:select.option>
+            </flux:select>
+            <flux:input type="email" label="Email Guest" placeholder="Type the email of the guest"
+                wire:model.defer="guestData.email" />
+            <flux:input label="Phone Guest" placeholder="Type the phone of the guest"
+                wire:model.defer="guestData.phone" />
+            <div class="flex">
+                <flux:spacer />
+                <flux:button type="submit" variant="primary" wire:click="save">Save</flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    @foreach ($this->guests as $modal)
+        @if ($modal['qr_generated'])
+            <flux:modal name="qr-modal-{{ $modal['id'] }}" class="md:w-96">
+                <div class="space-y-6">
+                    <div>
+                        <flux:heading size="lg">QR Code for {{ $modal['name'] }} </flux:heading>
+                        <flux:description class="mt-2">Scan this QR code at the event check-in.</flux:description>
+                    </div>
+                    <div class="flex items-center justify-center mb-4">
+                        {!! $modal['qr_generated'] !!}
+                    </div>
+                    {{-- <flux:button variant="primary" wire:click="downloadQr({{ $modal['qr_generated'] }})">Download</flux:button> --}}
+                </div>
+            </flux:modal>
+        @endif
+    @endforeach
 </div>

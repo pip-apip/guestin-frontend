@@ -4,8 +4,7 @@ use Livewire\Volt\Component;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Http;
 
-new #[Layout('components.layouts.app-landing')]
-class extends Component {
+new #[Layout('components.layouts.app-landing')] class extends Component {
     public $guestCode = '';
     public $guestData = [];
     public $url = '';
@@ -18,9 +17,9 @@ class extends Component {
         $this->guestCode = $this->getQueryStringParams();
         $this->guestData = $this->getGuestData();
         // dd($this->guestData);
-        if($this->guestData['confirm_attendance'] === null){
+        if ($this->guestData['guest']['confirm_attendance'] === null) {
             $cardNumber = 2;
-        }else{
+        } else {
             $cardNumber = 1;
         }
     }
@@ -34,9 +33,7 @@ class extends Component {
 
     public function getGuestData()
     {
-        $baseUrl = env('API_BASE_URL');
-        $response = Http::get("$baseUrl/guests/confirm-guest/{$this->guestCode}");
-
+        $response = Http::get(env('API_BASE_URL') . '/guests/confirm-guest/' . $this->guestCode);
         if ($response->successful()) {
             return $response->json('data');
         } else {
@@ -46,19 +43,19 @@ class extends Component {
 
     public function confirmAttendance()
     {
-        $baseUrl = env('API_BASE_URL');
-        $response = Http::post($this->url, [
-            'available_date' => $this->dateAttendance,
-            'status' => 'confirmed',
-        ]);
+        // $baseUrl = env('API_BASE_URL');
+        // $response = Http::post($this->url, [
+        //     'available_date' => $this->dateAttendance,
+        //     'status' => 'confirmed',
+        // ]);
 
-        if ($response->successful()) {
-            session()->flash('success', $response->json('message'));
-            $this->dispatch('verifyUser');
-        } else {
-            session()->flash('error', 'Failed to confirm attendance. Please try again.');
-            \Log::error('Error confirming attendance: ' . $response->json());
-        }
+        // if ($response->successful()) {
+        //     session()->flash('success', $response->json('message'));
+        $this->dispatch('verifyUser');
+        // } else {
+        //     session()->flash('error', 'Failed to confirm attendance. Please try again.');
+        //     \Log::error('Error confirming attendance: ' . $response->json());
+        // }
     }
 }; ?>
 
@@ -92,8 +89,15 @@ class extends Component {
 
         <!-- Description -->
         <p class="text-center text-zinc-700 dark:text-zinc-200 mb-4 leading-relaxed">
-            Hello <strong>{{ $guestData['name'] }}</strong>, we look forward to seeing you at the
-            <strong>{{ $guestData['event']['name'] }}</strong> event.
+            Hello <strong>{{ $guestData['guest']['name'] }}</strong>, we look forward to seeing you at the
+            <strong>"{{ $guestData['event']['name'] }}"</strong> event, taking place from
+            @if ($guestData['event']['start_date'] === $guestData['event']['end_date'])
+                <strong>{{ \Carbon\Carbon::parse($guestData['event']['start_date'])->setTimezone('Asia/Jakarta')->format('D d M Y') }}</strong>.
+            @else
+                <strong>{{ \Carbon\Carbon::parse($guestData['event']['start_date'])->format('D, d M Y') }}</strong>
+                to
+                <strong>{{ \Carbon\Carbon::parse($guestData['event']['end_date'])->format('D, d M Y') }}</strong>
+            @endif
             Please select your attendance date to confirm your participation in this event.
         </p>
 
@@ -108,24 +112,13 @@ class extends Component {
             Confirm Attendance
         </button>
     </div>
-
-    <div wire:key="toast-{{ now() }}">
-        @if (session('success'))
-            <x-toast type="success" :message="session('success')" />
-        @endif
-
-        @if (session('error'))
-            <x-toast type="error" :message="session('error')" />
-        @endif
-    </div>
 </div>
 
 
 @push('scripts')
     <script>
         document.addEventListener('livewire:init', () => {
-            Livewire.on('verifyUser', (event) => {
-                // function verifyUser() {
+            window.addEventListener('verifyUser', (event) => {
                 const userIcon = document.getElementById('userIcon');
                 const checkIcon = document.getElementById('checkIcon');
 
@@ -134,7 +127,6 @@ class extends Component {
 
                 checkIcon.classList.remove('opacity-0', 'scale-0');
                 checkIcon.classList.add('opacity-100', 'scale-100');
-                // }
             });
         });
     </script>
