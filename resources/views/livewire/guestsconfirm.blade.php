@@ -33,18 +33,22 @@ new #[Layout('components.layouts.app-landing')] class extends Component {
 
     public function getGuestData()
     {
-        $response = Http::get(env('API_BASE_URL') . '/guests/confirm-guest/' . $this->guestCode);
-        if ($response->successful()) {
-            $this->start_date = Carbon::parse($response->json('data.event.start_date'));
-            $this->end_date = Carbon::parse($response->json('data.event.end_date'));
-            if ($response->json()['data']['guest']['qr_generated'] !== null) {
-                $this->cardNumber = 2;
+        try {
+            $response = Http::get(env('API_BASE_URL') . '/guests/confirm-guest/' . $this->guestCode);
+            if ($response->successful()) {
+                $this->start_date = Carbon::parse($response->json('data.event.start_date'));
+                $this->end_date = Carbon::parse($response->json('data.event.end_date'));
+                if ($response->json()['data']['guest']['qr_generated'] !== null) {
+                    $this->cardNumber = 2;
+                } else {
+                    $this->cardNumber = 1;
+                }
+                return $response->json('data');
             } else {
-                $this->cardNumber = 1;
+                return null;
             }
-            return $response->json('data');
-        } else {
-            return null;
+        } catch (\Exception $e) {
+            dd('Error fetching guest data: ' . $e->getMessage());
         }
     }
 
@@ -247,24 +251,20 @@ new #[Layout('components.layouts.app-landing')] class extends Component {
             </div>
         </flux:modal>
     @elseif($this->cardNumber == 2)
-        <div class="w-full flex flex-col items-center justify-center">
-            <div class="flex flex-col items-center">
-                <div class="flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                        <path fill-rule="evenodd"
-                            d="M9.344 3.1a49.488 49.488 0 0 0-5.769 1.662c-1.12.39-1.682 1.65-1.292 2.77l3.042 8.72c.39 1.12 1.65 1.682 2.77 1.292a49.488 49.488 0 0 0 5.769-1.662c1.12-.39 1.682-1.65 1.292-2.77l-3.042-8.72c-.39-1.12-1.65-1.682-2.77-1.292zm-3.468 3.96a1 1 0 0 0-1.316-.516c-.26.09-.42.36-.33.62l2.203 6.31a1 1 0 0 0 .516 1.316c.26.09.52-.07.62-.33l-2.203-6.31zm5.632-1.59a1 1 0 0 0-1.316-.516c-.26.09-.42.36-.33.62l2.203 6.31a1 1 0 0 0 .516 1.316c.26.09.52-.07.62-.33l-2.203-6.31z"
-                            clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                    <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                        Oops!
-                    </p>
-                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        Card number not found
-                    </p>
-                </div>
+        <div
+            class="flex flex-col items-center justify-center bg-white dark:bg-zinc-900 p-6 lg:px-14 rounded-xl shadow-xl w-full max-w-md aspect-auto">
+
+            <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100 mb-4 text-center">
+                Hi, <strong>{{ $guestData['guest']['name'] }}</strong>
+            </h1>
+
+            <div class="flex items-center justify-center mb-4">
+                {!! $guestData['guest']['qr_generated'] !!}
             </div>
+
+            <p class="text-center text-zinc-700 dark:text-zinc-200 mb-4 leading-relaxed text-sm">
+                Please scan this QR code at the event check-in. We look forward to seeing you at the event.
+            </p>
         </div>
     @endif
 </div>

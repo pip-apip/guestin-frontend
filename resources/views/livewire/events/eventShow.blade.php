@@ -87,9 +87,9 @@ new class extends Component {
             $response = Http::withToken(session('token'))
                 ->post(env('API_BASE_URL') . '/guests', $this->guestData)
                 ->json();
-            session()->flash('success', $response['message'] ?? 'Guest added successfully.');
 
             if ($response['message'] === 'success') {
+                session()->flash('success', $response['message'] ?? 'Guest added successfully.');
                 // $this->getData();
                 Flux::modals()->close();
                 $this->guestData = [
