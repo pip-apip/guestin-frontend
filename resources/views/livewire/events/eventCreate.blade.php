@@ -31,7 +31,6 @@ new class extends Component {
 
         try {
             $response = Http::withToken(session('token'))->post(env('API_BASE_URL').'/events', $this->data)->json();
-
             if ($response['error'] === null) {
                 return Redirect::route('events.index')->success('Event saved successfully!');
             } else {
