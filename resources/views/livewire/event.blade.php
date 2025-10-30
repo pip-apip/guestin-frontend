@@ -103,8 +103,8 @@ if (modal) {
                                     {{ $data['name'] }}
                                 </td>
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
-                                    {{ \Carbon\Carbon::parse($data['start_date'])->format('D m Y') }} -
-                                    {{ \Carbon\Carbon::parse($data['end_date'])->format('D m Y') }}
+                                    {{ \Carbon\Carbon::parse($data['start_date'])->format('D, d M Y') }} -
+                                    {{ \Carbon\Carbon::parse($data['end_date'])->format('D, d M Y') }}
                                 </td>
                                 <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
                                     {{ \Carbon\Carbon::parse($data['start_time'])->format('H:i') }} -
