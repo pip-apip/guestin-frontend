@@ -21,7 +21,11 @@ new #[Layout('components.layouts.app-landing')] class extends Component {
     {
         $this->guestCode = $this->getQueryStringParams();
         $this->guestData = $this->getGuestData();
-        // dd($this->guestData);
+        if ($this->cardNumber == 2) {
+            foreach ($this->guestData['attendances'] as $attendance) {
+                $this->finalSelectedDates[] = $attendance['attendance_date'];
+            }
+        }
     }
 
     public function getQueryStringParams()
@@ -35,20 +39,25 @@ new #[Layout('components.layouts.app-landing')] class extends Component {
     {
         try {
             $response = Http::get(env('API_BASE_URL') . '/guests/confirm-guest/' . $this->guestCode);
+
             if ($response->successful()) {
-                $this->start_date = Carbon::parse($response->json('data.event.start_date'));
-                $this->end_date = Carbon::parse($response->json('data.event.end_date'));
-                if ($response->json()['data']['guest']['qr_generated'] !== null) {
+                $data = $response->json()['data'];
+                $this->start_date = Carbon::parse($data['event']['start_date']);
+                $this->end_date = Carbon::parse($data['event']['end_date']);
+
+                if (isset($data['guest']['qr_generated']) && $data['guest']['qr_generated'] !== null) {
                     $this->cardNumber = 2;
-                } else {
+                } elseif (isset($data['guest']['qr_generated']) && $data['guest']['qr_generated'] === null) {
                     $this->cardNumber = 1;
+                } else {
+                    $this->cardNumber = 0;
                 }
-                return $response->json('data');
+                return $data;
             } else {
                 return null;
             }
         } catch (\Exception $e) {
-            dd('Error fetching guest data: ' . $e->getMessage());
+            \Log::error($e->getMessage());
         }
     }
 
@@ -117,7 +126,33 @@ new #[Layout('components.layouts.app-landing')] class extends Component {
 }; ?>
 
 <div class="w-full flex flex-col items-center justify-center">
-    @if ($this->cardNumber == 1)
+    @if ($this->cardNumber == 0)
+        <div
+            class="flex flex-col items-center justify-center bg-white dark:bg-zinc-900 p-6 lg:px-14 rounded-xl shadow-xl w-full max-w-md aspect-auto">
+
+            <!-- Heading -->
+            <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100 mb-4 text-center">
+                Guest Not Found
+            </h1>
+
+            <!-- Animated Icon Wrapper -->
+            <div class="relative w-64 h-64 mb-4" id="iconWrapper">
+                <!-- User Icon -->
+                <svg id="userIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="0.5"
+                    stroke="currentColor"
+                    class="absolute inset-0 w-64 h-64 text-blue-500 transition-all duration-500 ease-in-out">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+            </div>
+
+            <!-- Description -->
+            <p class="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                We could not find any guest information associated with the provided code. Please check the link or
+                contact the event organizer for assistance.
+            </p>
+        </div>
+    @elseif ($this->cardNumber == 1)
         <div
             class="flex flex-col items-center justify-center bg-white dark:bg-zinc-900 p-6 lg:px-14 rounded-xl shadow-xl w-full max-w-md aspect-auto">
 
@@ -129,8 +164,8 @@ new #[Layout('components.layouts.app-landing')] class extends Component {
             <!-- Animated Icon Wrapper -->
             <div class="relative w-64 h-64 mb-4" id="iconWrapper">
                 <!-- User Icon -->
-                <svg id="userIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="0.5"
-                    stroke="currentColor"
+                <svg id="userIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="0.5" stroke="currentColor"
                     class="absolute inset-0 w-64 h-64 text-blue-500 transition-all duration-500 ease-in-out">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -251,20 +286,107 @@ new #[Layout('components.layouts.app-landing')] class extends Component {
             </div>
         </flux:modal>
     @elseif($this->cardNumber == 2)
-        <div
-            class="flex flex-col items-center justify-center bg-white dark:bg-zinc-900 p-6 lg:px-14 rounded-xl shadow-xl w-full max-w-md aspect-auto">
+        <div x-data="{ showSummary: false }" class="relative flex items-center justify-center w-full h-full bg-transparent">
 
-            <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100 mb-4 text-center">
-                Hi, <strong>{{ $guestData['guest']['name'] }}</strong>
-            </h1>
+            <!-- QR SECTION -->
+            <div class="relative z-20 flex flex-col items-center justify-center bg-white dark:bg-zinc-900 p-6 lg:px-14 rounded-xl shadow-xl w-full max-w-md aspect-auto transition-all duration-500 ease-in-out"
+                :class="showSummary ? '-translate-x-60' : 'translate-x-0'">
+                <!-- Toggle Button -->
+                <button @click="showSummary = !showSummary"
+                    class="absolute flex items-center justify-center w-10 h-10
+                bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800
+                rounded-full shadow-md px-1
+                text-zinc-600 dark:text-zinc-300 hover:text-zinc-800 dark:hover:text-white
+                hover:shadow-lg transition-all duration-300 cursor-pointer"
+                :class="showSummary ? '-right-15' : '-right-4.5'">
+                    {{-- <span x-text="showSummary ? 'Hide Summary' : 'View Summary'"></span> --}}
+                    <svg :class="{ 'rotate-180': showSummary }"
+                        class="w-12 h-auto transform transition-transform duration-300" fill=""
+                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
 
-            <div class="flex items-center justify-center mb-4">
-                {!! $guestData['guest']['qr_generated'] !!}
+
+
+                <!-- Content -->
+                <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100 mb-4 text-center">
+                    Welcome, <strong>{{ $guestData['guest']['name'] }}</strong>
+                </h1>
+
+                <div class="flex items-center justify-center mb-4">
+                    {!! $guestData['guest']['qr_generated'] !!}
+                </div>
+
+                <p class="text-center text-zinc-700 dark:text-zinc-200 mb-4 leading-relaxed text-sm">
+                    Please present this QR code upon arrival for event check-in.
+                    We’re excited to have you join us and look forward to your participation.
+                </p>
+
+                <p class="text-center text-zinc-500 dark:text-zinc-300 text-xs mt-2">
+                    Tap “Arrow” to see your attendance details.
+                </p>
             </div>
 
-            <p class="text-center text-zinc-700 dark:text-zinc-200 mb-4 leading-relaxed text-sm">
-                Please scan this QR code at the event check-in. We look forward to seeing you at the event.
-            </p>
+            <!-- ATTENDANCE SUMMARY SECTION -->
+            <div class="absolute z-10 right-1/2 translate-x-1/2 flex flex-col items-center justify-center bg-white dark:bg-zinc-900 p-6 lg:px-14 rounded-xl shadow-xl w-full max-w-md aspect-auto transition-all duration-500 ease-in-out"
+                :class="showSummary ? 'translate-x-130 opacity-100' : 'translate-x-0 opacity-0 pointer-events-none'">
+                <h2 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100 mb-4 text-center">
+                    Attendance Summary
+                </h2>
+
+                <flux:separator variant="subtle" class="my-4" />
+
+                <p class="text-center text-zinc-700 dark:text-zinc-200 mb-4 text-sm leading-relaxed">
+                    Below is a summary of your confirmed attendance schedule.
+                </p>
+
+                <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 mb-4">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Day</th>
+                            <th scope="col" class="px-6 py-3">Date</th>
+                            <th scope="col" class="px-6 py-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($this->guestData['attendances'] as $attendance)
+                            @php
+                                try {
+                                    $date = \Carbon\Carbon::parse($attendance['attendance_date'])->startOfDay();
+                                    $startDate = \Carbon\Carbon::parse($this->start_date)->startOfDay();
+                                    $dayNumber = $startDate->diffInDays($date) + 1;
+                                    $status = '';
+                                    if ($attendance['status'] == 'checked_in') {
+                                        $status = 'Checked In';
+                                    } elseif ($attendance['status'] == 'not_checked_in') {
+                                        $status = 'Not Checked In';
+                                    }
+                                } catch (\Exception $e) {
+                                    continue; // Skip invalid dates
+                                }
+                            @endphp
+                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    Day {{ $dayNumber }}
+                                </td>
+                                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    {{ $date->format('D, d M Y') }}
+                                </td>
+                                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    {{ $status }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                {{-- <button @click="showSummary = false"
+                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline transition mt-2">
+                    Close Summary
+                </button> --}}
+            </div>
+
         </div>
     @endif
 </div>

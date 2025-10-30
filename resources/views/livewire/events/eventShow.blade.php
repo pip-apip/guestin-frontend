@@ -188,26 +188,26 @@ new class extends Component {
         <div class="col-span-4 grid grid-rows-[auto_1fr] gap-3">
             <livewire:components.widget-event :data="$this->event['widgets']" />
 
-            <div class="block p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all">
+            <div class="block p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800 transition-all">
                 <!-- Event Name -->
                 <h5 class="text-2xl font-bold flex items-center justify-between text-gray-900 dark:text-white">
                     {{ $this->event['event']['name'] }}
                     <flux:badge :color="
-            match($this->event['event']['status']) {
-                'upcoming' => 'blue',
-                'ongoing' => 'green',
-                'completed' => 'gray',
-                'cancelled' => 'red',
-                default => 'gray',
-            }
-        " class="text-xs font-medium ml-2">
+                        match($this->event['event']['status']) {
+                            'upcoming' => 'blue',
+                            'ongoing' => 'green',
+                            'completed' => 'gray',
+                            'cancelled' => 'red',
+                            default => 'gray',
+                        }
+                    " class="text-xs font-medium ml-2">
                         {{ ucfirst($this->event['event']['status']) }}
                     </flux:badge>
                 </h5>
 
 
                 <!-- Event Info Bar -->
-                <div class="flex flex-wrap items-center text-sm text-gray-400 dark:text-gray-400 mt-1 mb-4 gap-4">
+                <div class="flex flex-wrap items-center text-sm text-gray-400 dark:text-gray-40 mt-1 mb-4 gap-4">
                     <!-- Dates -->
                     <div class="flex items-center gap-1">
                         <flux:icon name="calendar" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -291,19 +291,16 @@ new class extends Component {
                 <span class="text-xs font-medium text-blue-700 dark:text-white">{{ $progress }}%</span>
             </div>
         </div>
-
-
     </div>
 
-
-
+    {{-- Date Selector --}}
     <ul class="text-sm max-w-5xl mx-auto font-medium rounded-xl text-center text-gray-500 shadow-sm flex sm:justify-center dark:divide-gray-700 dark:text-gray-400 overflow-hidden">
         @foreach ($this->dateRange() as $date)
         <li class="flex-1">
-            <button wire:click="selectDay('{{ $date }}')" class="w-full transition-colors duration-300 px-4 py-2 border border-gray-200 dark:border-gray-700 text-black  hover:border-gray-800 cursor-pointer focus:ring-4 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700
-                {{ $loop->first ? 'rounded-l-lg' : '' }}
-                {{ $loop->last ? 'rounded-r-lg' : '' }}
-                {{ $this->date === $date ? ' bg-black text-white' : ' bg-white dark:bg-gray-800' }}">
+            <button wire:click="selectDay('{{ $date }}')" class="w-full transition-colors duration-300 px-4 py-2 border border-gray-200 dark:border-zinc-700 text-black hover:border-gray-800 cursor-pointer focus:ring-4 dark:hover:text-white dark:bg-zinc-900 dark:hover:bg-zinc-700
+                {{ $loop->first ? 'rounded-l-xl' : '' }}
+                {{ $loop->last ? 'rounded-r-xl' : '' }}
+                {{ $this->date === $date ? ' bg-black text-white' : ' dark:text-zinc-700 bg-white dark:bg-zinc-800' }}">
                 Day {{ $loop->iteration }}
             </button>
         </li>
