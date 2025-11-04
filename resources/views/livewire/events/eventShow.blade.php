@@ -35,7 +35,7 @@ new class extends Component {
 
     public function mount()
     {
-         $this->date = today()->format('Y-m-d') ;
+        $this->date = today()->format('Y-m-d') ;
         $this->loadGuests();
     }
 

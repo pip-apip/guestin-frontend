@@ -45,9 +45,9 @@ new #[Layout('components.layouts.app-landing')] class extends Component {
                 $this->start_date = Carbon::parse($data['event']['start_date']);
                 $this->end_date = Carbon::parse($data['event']['end_date']);
 
-                if (isset($data['guest']['qr_generated']) && $data['guest']['qr_generated'] !== null) {
+                if ($data['guest']['qr_generated'] !== null) {
                     $this->cardNumber = 2;
-                } elseif (isset($data['guest']['qr_generated']) && $data['guest']['qr_generated'] === null) {
+                } elseif ($data['guest']['qr_generated'] === null) {
                     $this->cardNumber = 1;
                 } else {
                     $this->cardNumber = 0;

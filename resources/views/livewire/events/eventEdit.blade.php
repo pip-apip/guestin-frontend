@@ -7,6 +7,21 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\ValidationException;
 
 new class extends Component {
+    public $name;
+
+    public $data = [];
+
+    public function mount($name)
+    {
+        $this->name = $name;
+        $this->data = $this->getEventsData();
+    }
+
+    public function getEventsData()
+    {
+        $response = Http::withToken(session('token'))->get(env('API_BASE_URL').'/events/'. $this->name)->json();
+        return $response['data']['event'];
+    }
 
     public function save()
     {
