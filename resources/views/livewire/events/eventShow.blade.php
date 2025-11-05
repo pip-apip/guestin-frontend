@@ -35,7 +35,17 @@ new class extends Component {
 
     public function mount()
     {
-        $this->date = today()->format('Y-m-d') ;
+        $today = today()->format('Y-m-d');
+
+        $endDate = $this->event['event']['end_date'] ?? null;
+        $startDate = $this->event['event']['start_date'] ?? null;
+
+        if ($endDate && $startDate) {
+            $this->date = $today >= $endDate ? $startDate : $today;
+        } else {
+            $this->date = $today;
+        }
+
         $this->loadGuests();
     }
 
@@ -79,10 +89,6 @@ new class extends Component {
         }
     }
 
-    public function updatedDateQuery()
-    {
-        $this->loadGuests();
-    }
 
     public function updatedSearchQuery()
     {
@@ -330,9 +336,9 @@ new class extends Component {
                     <flux:select wire:model.live="searchStatus" placeholder="Select Status ...">
                         <flux:select.option value="">All</flux:select.option>
                         <flux:select.option value="invited">Invited</flux:select.option>
-                        <flux:select.option value="confirmed">Confirmed</flux:select.option>
                         <flux:select.option value="checked_in">Checked In</flux:select.option>
-                        <flux:select.option value="canceled">Canceled</flux:select.option>
+                        <flux:select.option value="not_checked_in">Not Checked In</flux:select.option>
+                        <flux:select.option value="cancelled">Cancelled</flux:select.option>
                     </flux:select>
                 </div>
             </div>
@@ -403,6 +409,7 @@ new class extends Component {
                                 @endif
 
                             </flux:modal.trigger>
+                             <flux:button as-a href="{{ route('guests.confirm', $guest['confirm_attendance']) }}" size="sm" target="__blank" >Link</flux:button>
                             <flux:button size="sm" variant="ghost" wire:click="edit({{ $guest['id'] }})">
                                 Edit
                             </flux:button>
